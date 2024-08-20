@@ -1,45 +1,47 @@
-import { Controller, Get, Param, Post, Delete, Put, Query, Body } from '@nestjs/common';
-import { createNinjaDto} from './dto/create-ninja.dto';
+import { Controller, Get, Param, Post, Delete, Put, Query, Body, NotFoundException, ParseEnumPipe, ParseIntPipe, ValidationPipe } from '@nestjs/common';
+import { CreateNinjaDto} from './dto/create-ninja.dto';
 import { UpdateNinjaDto } from './dto/update-ninja.dto';
+import { NinjasService } from './ninjas.service'
 
 @Controller('ninjas')
 export class NinjasController {
-// GET /ninjas?type=fast --> []
+//Initiating a constructor for the Ninja service instead of creating an instance of the service in each request
+constructor(private readonly ninjasService:NinjasService){
 
+    }
+// GET /ninjas?type=fast --> []
 @Get()
-getNinjas(@Query('type') type:string){
-    return [
-        type
-    ];
+getNinjas(@Query('weapon') weapon: 'stars' | 'nunchunks'){
+    //creating an instance of Ninja Service
+    // const service = new NinjasService();
+    return this.ninjasService.getNinjas(weapon);
 }
+
 // GET /ninjas/:id --> { ... }
 @Get(':id')
-getOneNinja(@Param('id') id:string){
-    return {
-        id,
-    };
+getOneNinja(@Param('id', ParseIntPipe) id:number){
+    try{
+        return this.ninjasService.getNinja(id);
+    }catch(err){
+        throw new NotFoundException
+    }
+    
 }
 // POST /ninjas 
 @Post()
-createNinjas(@Body() createNinjaDto:createNinjaDto){
-    return {
-        name: createNinjaDto.name
-    };
+createNinjas(@Body(new ValidationPipe() ) createNinjaDto:CreateNinjaDto){
+    return this.ninjasService.createNinjas(createNinjaDto)
 }
 // PUT /ninjas/:id --> { ...}
 @Put(':id')
 UpdateNinja(@Param('id') id:string, @Body() updateNinjaDto:UpdateNinjaDto){
-    return {
-        id,
-        name: updateNinjaDto.name,
-    };
+    return this.ninjasService.updateNinja(+id, updateNinjaDto)
 }
+
 // DeLETE /ninjas/ :id --> []
 @Delete(':id')
 deleteninja(@Param('id') id:string){
-    return {
-        id,
-    }
+    return this.ninjasService.removeNinja(+id)
 }
 
 }
